@@ -3,6 +3,7 @@ package shared
 import (
 	"dmds_lab2/hash_function"
 	"encoding/binary"
+	"math"
 	"math/rand"
 )
 
@@ -16,7 +17,7 @@ const BlockSize = KeySize + ValueSize
 var Endianess = binary.LittleEndian
 
 // TombstoneValue is the value used to mark a key as deleted.
-var TombstoneValue = ValueType{255, 255, 255, 255, 255, 255, 255, 255}
+var TombstoneValue = ValueType(math.MaxUint64)
 
 const SSTablesRootDirectory = ".ss_tables"
 

@@ -238,7 +238,7 @@ func (L *StorageLevel) FlushFirstComponent() ([]byte, shared.KeyType, shared.Key
 // 3. Create new SSTables with the merged data
 // 4. Remove the old SSTables in the current storage level that has been merged
 // 5. Add N (Replace the old SSTables) new SSTables to the current storage level, where N slices of the merged data are created to fit the component size (FirstLevelMaxSize)
-// Since we are using the Tiering Policy, the higher level loop will check if the storage level is full and flush the first component to the next level etc.
+// Since we are using the Partitioning Policy, the higher level loop will check if the storage level is full and flush the first component to the next level etc.
 func (L *StorageLevel) InsertFlushedData(data []byte, minKey shared.KeyType, maxKey shared.KeyType) error {
 	// Take 2 first parts and merge them
 	dataToMerge := make([][]byte, 0)
@@ -276,7 +276,7 @@ func (L *StorageLevel) InsertFlushedData(data []byte, minKey shared.KeyType, max
 		return err
 	}
 
-	// Create new SSTables with the merged data, since we are using the Tiering Policy, we will create N new SSTables
+	// Create new SSTables with the merged data, since we are using the Partitioning Policy, we will create N new SSTables
 	// which fits the component size (FirstLevelMaxSize).
 	// The higher level loop will check is the storage level is full and flush the first component to the next level etc.
 	for startIndex := uint64(0); startIndex < uint64(len(data)); startIndex += shared.FirstLevelMaxSize * shared.BlockSize {

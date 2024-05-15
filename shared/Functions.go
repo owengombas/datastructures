@@ -1,8 +1,11 @@
 package shared
 
 import (
+	"bufio"
 	"errors"
+	"fmt"
 	"math/rand"
+	"os"
 )
 
 // ByteToKey converts a byte slice to a KeyType.
@@ -12,28 +15,28 @@ func ByteToKey(data []byte) (KeyType, error) {
 	}
 
 	key := Endianess.Uint64(data)
-	return key, nil
+	return KeyType(key), nil
 }
 
 // ByteToValue converts a byte slice to a ValueType.
 func ByteToValue(data []byte) (ValueType, error) {
 	if uint64(len(data)) != ValueSize {
-		return ValueType{}, errors.New("invalid data size")
+		return ValueType(0), errors.New("invalid data size")
 	}
 
-	value := ValueType(data)
-	return value, nil
+	value := Endianess.Uint64(data)
+	return ValueType(value), nil
 }
 
 // ByteToKeyValue converts a byte slice to a key-value pair.
 func ByteToKeyValue(data []byte) (KeyType, ValueType, error) {
 	key, err := ByteToKey(data[:KeySize])
 	if err != nil {
-		return 0, ValueType{}, err
+		return 0, ValueType(0), err
 	}
 	value, err := ByteToValue(data[KeySize:BlockSize])
 	if err != nil {
-		return 0, ValueType{}, err
+		return 0, ValueType(0), err
 	}
 	return key, value, nil
 }
@@ -48,7 +51,7 @@ func KeyToByte(key KeyType) []byte {
 // ValueToByte converts a ValueType to a byte slice.
 func ValueToByte(value ValueType) []byte {
 	data := make([]byte, ValueSize)
-	copy(data, value[:])
+	Endianess.PutUint64(data, value)
 	return data
 }
 
@@ -62,12 +65,7 @@ func KeyValueToByte(key KeyType, value ValueType) []byte {
 
 // IsTombstone returns true if the data is a tombstone.
 func IsTombstone(data ValueType) bool {
-	for _, b := range data {
-		if b != 255 {
-			return false
-		}
-	}
-	return true
+	return data == TombstoneValue
 }
 
 // RandomString generates a random string of length n.
@@ -79,4 +77,37 @@ func RandomString(n int) string {
 		b[i] = letterByte[rand.Int63()%int64(len(letterByte))]
 	}
 	return string(b)
+}
+
+func RandomNotInSet(rng *rand.Rand, max int, set map[int]struct{}) int {
+	for {
+		value := rng.Intn(max)
+		if _, ok := set[value]; !ok {
+			return value
+		}
+	}
+}
+
+func ReadValuesFromFile(filePath string) ([]int, []int) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	keys := make([]int, 0)
+	values := make([]int, 0)
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		key, value := 0, 0
+		fmt.Sscanf(scanner.Text(), "%d %d", &key, &value)
+		keys = append(keys, key)
+		values = append(values, value)
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+
+	return keys, values
 }

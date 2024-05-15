@@ -14,6 +14,34 @@ import (
 const rootDirectory = ".ss_tables"
 const MaxLevelTest = 15
 
+func testBPlusTree() {
+	r := rand.New(rand.NewSource(4))
+	ln := b_plus_tree.NewBPlusTree(3)
+	exists := make(map[uint64]bool)
+	for i := 0; i < 100; i++ {
+		n := r.Intn(100)
+		doesExist := exists[uint64(n)]
+		if !doesExist {
+			fmt.Println(n)
+			ln.Insert(shared.KeyType(n))
+		}
+		exists[uint64(n)] = true
+	}
+	leaf, _, _, _ := ln.Get(1)
+
+	for leaf != nil {
+		for _, k := range leaf.GetKeys() {
+			if k != 0 {
+				fmt.Print(strconv.FormatUint(k, 10), " ")
+			} else {
+				fmt.Print(" . ")
+			}
+		}
+		fmt.Print(" -> ")
+		leaf = leaf.GetNext()
+	}
+}
+
 func testRetrieval(expectedValues map[shared.KeyType]shared.ValueType, lsmTree *lsm_tree.LSMTree) {
 	for expectedKey, expectedValue := range expectedValues {
 		value, _, sourceFile, err := lsmTree.Get(expectedKey)
@@ -85,24 +113,20 @@ func loadLSMTree() *lsm_tree.LSMTree {
 	return lsmTree
 }
 
-func main_lsmtree() {
+func mainLSMTree() {
 	const nValues = 500 * shared.FirstLevelMaxSize
 	randomValuesGenerator := rand.New(rand.NewSource(123))
 	keyValueStore := make(map[shared.KeyType]shared.ValueType)
 	for i := uint64(0); i < nValues; i++ {
 		key := randomValuesGenerator.Uint64()
-		value := byte(randomValuesGenerator.Intn(256))
-		valueByte := [shared.ValueSize]byte{value, 0, 0, 0, 0, 0, 0, 0}
-		keyValueStore[key] = valueByte
+		keyValueStore[key] = i
 	}
 
 	const nValuesNotExisting = 100
 	notExistingKeyValueStore := make(map[shared.KeyType]shared.ValueType)
 	for i := uint64(0); i < nValuesNotExisting; i++ {
 		key := randomValuesGenerator.Uint64()
-		value := byte(randomValuesGenerator.Intn(256))
-		valueByte := [shared.ValueSize]byte{value, 0, 0, 0, 0, 0, 0, 0}
-		notExistingKeyValueStore[key] = valueByte
+		notExistingKeyValueStore[key] = i
 	}
 
 	fmt.Println("====== Retrieval right after creation =======")
@@ -117,29 +141,5 @@ func main_lsmtree() {
 }
 
 func main() {
-	r := rand.New(rand.NewSource(4))
-	ln := b_plus_tree.NewBPlusTree(3)
-	exists := make(map[uint64]bool)
-	for i := 0; i < 100; i++ {
-		n := r.Intn(100)
-		doesExist := exists[uint64(n)]
-		if !doesExist {
-			fmt.Println(n)
-			ln.Insert(shared.KeyType(n))
-		}
-		exists[uint64(n)] = true
-	}
-	leaf, _, _, _ := ln.Get(1)
-
-	for leaf != nil {
-		for _, k := range leaf.GetKeys() {
-			if k != 0 {
-				fmt.Print(strconv.FormatUint(k, 10), " ")
-			} else {
-				fmt.Print(" . ")
-			}
-		}
-		fmt.Print(" -> ")
-		leaf = leaf.GetNext()
-	}
+	mainLSMTree()
 }

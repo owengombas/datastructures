@@ -109,7 +109,7 @@ func (s *SkipList) Delete(key shared.KeyType) error {
 
 // NewSkipList returns a new SkipList.
 func NewSkipList() *SkipList {
-	head := newNode(maxLevel, 0, [shared.ValueSize]byte{})
+	head := newNode(maxLevel, 0, 0)
 	return &SkipList{
 		head:  head,
 		tail:  head,
